@@ -1,0 +1,358 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbar but allow scrolling */
+body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Dynamic colors */
+:root {
+  --color-cyber-background: #0d0d0d;
+  --color-cyber-surface: #1a1a1a;
+  --color-cyber-primary: #00ff9f;
+  --color-cyber-secondary: #ff00ff;
+  --color-cyber-accent: #00ffff;
+}
+
+/* Base measurements and responsive spacing (default for larger phones) */
+:root {
+  /* Touch target and spacing */
+  --min-touch-target: 48px;
+  --side-padding: min(16px, 4vw);
+  --content-max-width: 430px;
+  --top-padding: min(4px, 0.5vh);
+  
+  /* Header / Title */
+  --header-height: min(32px, 4vh);
+  /* Gap between header and tile area */
+  --header-to-tiles-gap: min(24px, 3vh);
+  
+  /* Tile (game board) area */
+  --game-gap: min(4px, 0.75vh);
+  --tile-size: min(calc((100vw - (6 * var(--game-gap))) / 5), 64px);
+  
+  /* Gap between tile area and keyboard */
+  --tiles-to-keyboard-gap: min(48px, 8vh);
+  
+  /* Keyboard */
+  --keyboard-width: 92vw;
+  --key-gap: min(10px, 2vw);
+  --key-base-width: calc((var(--keyboard-width) - (11 * var(--key-gap))) / 10);
+  --key-height: max(var(--min-touch-target), min(48px, 7vh));
+  --keyboard-bottom-padding: min(16px, 3vh);
+}
+
+/* Use dynamic viewport height (set in App.jsx via JS) */
+.app-container {
+  height: calc(var(--vh, 1vh) * 100);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--side-padding);
+  padding-top: var(--top-padding);
+  overflow-y: auto;
+}
+
+/* A tiny invisible spacer to trigger vertical scrolling (needed for iOS Safari auto‐hide) */
+.spacer {
+  height: 2vh;
+  min-height: 2vh;
+  opacity: 0;
+}
+
+/* Game container: distributes header, board and keyboard vertically */
+.game-container {
+  width: 100%;
+  max-width: var(--content-max-width);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Header container: title area */
+.header-container {
+  height: var(--header-height);
+  margin-bottom: var(--header-to-tiles-gap);
+}
+
+/* Main content (tile area) fills the remaining space */
+.content-spacing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Keyboard area: gap above keyboard is defined via margin-top */
+.keyboard-area {
+  margin-top: var(--tiles-to-keyboard-gap);
+  width: 100%;
+  padding: 0 0 max(0.5rem, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Spin animation for invalid words */
+@keyframes spin {
+  0% { 
+    transform: rotate(0deg) scale(1);
+    filter: invert(0);
+  }
+  50% { 
+    transform: rotate(180deg) scale(0.8);
+    filter: invert(1);
+  }
+  100% { 
+    transform: rotate(360deg) scale(1);
+    filter: invert(0);
+  }
+}
+
+.jiggle {
+  animation: spin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  will-change: transform, filter;
+}
+
+/* Game tile styles */
+.game-tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  font-size: calc(var(--tile-size) * 0.4);
+  font-weight: bold;
+  border: 2px solid #333;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: calc(var(--game-gap) * 0.25) calc(var(--game-gap) * 0.25) calc(var(--game-gap));
+  border-radius: calc(var(--tile-size) * 0.1);
+}
+.game-tile.correct {
+  background-color: #16a34a;
+  border-color: #15803d;
+}
+.game-tile.present {
+  background-color: #ca8a04;
+  border-color: #a16207;
+}
+.game-tile.absent {
+  background-color: #4b5563;
+  border-color: #374151;
+}
+.game-tile.filled {
+  border-color: #666;
+}
+
+/* Keyboard row and key styles */
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--key-gap);
+  width: 100%;
+  margin-bottom: var(--key-gap);
+}
+.key {
+  height: var(--key-height);
+  width: var(--key-base-width);
+  font-size: min(16px, calc(var(--key-height) * 0.35));
+  border: none;
+  border-radius: 4px;
+  background-color: #374151;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  min-width: min(var(--min-touch-target), calc(var(--keyboard-width) * 0.08));
+}
+.key:hover {
+  opacity: 0.8;
+}
+.key.correct {
+  background-color: #16a34a;
+}
+.key.present {
+  background-color: #ca8a04;
+}
+.key.absent {
+  background-color: #450a0a;
+  color: #b3b3b3;
+  opacity: 0.6;
+}
+.key:active {
+  transform: scale(0.95);
+}
+
+/* Special keys (ENTER and BACKSPACE) */
+.enter-key, .backspace-key {
+  width: calc(var(--key-base-width) * 1.5);
+  font-weight: 900;
+  font-size: 1.5em;
+  border-width: 2px;
+  border-style: solid;
+}
+.enter-key {
+  background: black;
+  border: 3px solid var(--color-cyber-primary);
+  color: var(--color-cyber-primary);
+}
+.enter-key:hover {
+  opacity: 0.8;
+}
+.backspace-key {
+  background: black;
+  border: 3px solid var(--color-cyber-secondary);
+  color: var(--color-cyber-secondary);
+}
+.backspace-key:hover {
+  opacity: 0.8;
+}
+
+/* Victory animations */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes celebrate {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes cyber-glow {
+  0% { box-shadow: 0 0 30px var(--color-cyber-primary); }
+  33% { box-shadow: 0 0 40px var(--color-cyber-accent); }
+  66% { box-shadow: 0 0 30px var(--color-cyber-secondary); }
+  100% { box-shadow: 0 0 30px var(--color-cyber-primary); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.5); }
+}
+
+.victory-container {
+  animation: celebrate 1s ease-in-out 2;
+  box-shadow: 0 0 30px var(--color-cyber-primary);
+}
+
+.victory-container.cyber {
+  animation: 
+    celebrate 1s ease-in-out 2,
+    cyber-glow 2s linear 2;
+  border-width: 3px;
+  border-color: var(--color-cyber-primary);
+  background: linear-gradient(45deg, 
+    rgba(0,0,0,0.95),
+    rgba(13,13,13,0.98)
+  );
+}
+
+.victory-title {
+  background: linear-gradient(90deg, 
+    var(--color-cyber-primary),
+    var(--color-cyber-accent),
+    var(--color-cyber-secondary),
+    var(--color-cyber-primary)
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: rainbow-text 2s linear 3;
+}
+
+@keyframes rainbow-text {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--color-cyber-accent);
+  border-radius: 50%;
+  animation: sparkle 1s ease-in-out 3;
+}
+
+.star:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.star:nth-child(2) { top: 20%; left: 90%; animation-delay: 0.1s; }
+.star:nth-child(3) { top: 80%; left: 20%; animation-delay: 0.2s; }
+.star:nth-child(4) { top: 40%; left: 85%; animation-delay: 0.3s; }
+.star:nth-child(5) { top: 90%; left: 80%; animation-delay: 0.4s; }
+.star:nth-child(6) { top: 15%; left: 45%; animation-delay: 0.5s; }
+.star:nth-child(7) { top: 85%; left: 45%; animation-delay: 0.6s; }
+.star:nth-child(8) { top: 50%; left: 10%; animation-delay: 0.7s; }
+
+/* Custom scrollbar styling */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-cyber-primary) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-cyber-primary);
+  border-radius: 3px;
+}
+
+/* Additional styling for background, text, and shadows */
+.bg-cyber-background {
+  background-color: var(--color-cyber-background);
+}
+.bg-cyber-surface {
+  background-color: var(--color-cyber-surface);
+}
+.text-cyber-primary {
+  color: var(--color-cyber-primary);
+}
+.border-cyber-primary {
+  border-color: var(--color-cyber-primary);
+}
+.shadow-neon {
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2),
+              0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+/* Ensure the root element fits within the screen */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.5rem;
+  text-align: center;
+  height: calc(var(--vh, 1vh) * 100);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Media query for smaller viewports (e.g., iPhone SE: 375x667) */
+/* Reduce overall dimensions so that all components fit in the viewport */
+@media (max-height: 667px) {
+  :root {
+    --header-height: min(28px, 4vh);
+    --header-to-tiles-gap: min(16px, 2vh);
+    --tiles-to-keyboard-gap: min(32px, 4vh);
+    --tile-size: min(calc((100vw - (6 * var(--game-gap))) / 5), 48px);
+    --key-height: max(var(--min-touch-target), min(40px, 6vh));
+    --key-gap: min(8px, 1.5vw);
+    --key-base-width: calc((var(--keyboard-width) - (11 * var(--key-gap))) / 10);
+  }
+}
